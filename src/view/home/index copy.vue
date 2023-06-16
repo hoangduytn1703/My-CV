@@ -59,20 +59,13 @@ import "./styles.scss";
 
 import { io } from "socket.io-client";
 import axios from "axios";
-export const socket = io("wss://socket-coderpush-gpt.weesmartvn.com/");
-console.log("file: index.vue:63 ►► socket:", socket);
 
-import { defineComponent, ref, onMounted, onUpdated, watch } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
 
 export default defineComponent({
   name: "Home",
   setup() {
-    socket.on("connect", () => {
-      console.log("Connected");
-    });
-    socket.on("disconnect", () => {
-      console.log("Disconnected");
-    });
+    const socket = io("wss://socket-coderpush-gpt.weesmartvn.com");
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get("id");
     const historyContainer = ref(null);
@@ -83,13 +76,6 @@ export default defineComponent({
       { id: 3, content: "I am fine, thank you." },
     ]);
     onMounted(async () => {
-      console.log(socket.connected);
-      socket.on("connect", () => {
-        console.log("Connected");
-      });
-      socket.on("disconnect", () => {
-        console.log("Disconnected");
-      });
       try {
         const response = await axios.get(
           "https://api-coderpush-gpt.weesmartvn.com/chat/conversations",
@@ -100,7 +86,7 @@ export default defineComponent({
           }
         );
 
-        conversations.value = response.data.data; // Lưu danh sách cuộc trò chuyện vào biến conversations
+        conversations.value = response.data.data; 
       } catch (error) {
         console.error(error);
       }
@@ -115,48 +101,30 @@ export default defineComponent({
           {
             params: {
               userId: userId,
-              conversationId: conversationId, // Truyền conversationId vào params
+              conversationId: conversationId,
             },
           }
         );
-        messages.value = response.data.data; // Xử lý dữ liệu trả về từ API
+        messages.value = response.data.data;
       } catch (error) {
         console.error(error);
       }
     };
     const newMessage = ref("");
-    const sendMessage = () => {
-      console.log("message ", newMessage.value);
-
-      if (newMessage.value.trim()) {
-        socket.emit("chat", {
-          content: newMessage.value.trim(),
-        });
-        newMessage.value = "";
-      }
+    const sendMessage = () => {       
+           
+      socket.emit("message", newMessage.value);
     };
-    onUpdated(() => {
-      socket.on("chat-rs", (message: any) => {
-        messages.value.push(message);
-      });
-    });
-    watch(
-      () => messages.value,
-      (val: any) => {
-        console.log(socket.connected);  
-        console.log("file: index.vue:127 ►► socket.on ►► message:", val);
-      }
-    );
 
     return {
       historyContainer,
       conversations,
+      newMessage,
       addNewConversation,
       loadMessages,
       messages,
-      socket,
-      sendMessage,
-      newMessage,
+      sendMessage
+      
     };
   },
 });

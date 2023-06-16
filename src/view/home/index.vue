@@ -12,7 +12,8 @@
     </nav>
     <div class="chat-box">
       <div class="chat-box-list">
-        <div class="" v-for="message in messages" :key="message.id">
+        <div class="" v-for="message in messages" :key="message.id"
+          :class="[message.fromSocket ? 'bg-blue-500' : 'bg-red-500']">
           {{ message.content }}
         </div>
       </div>
@@ -47,27 +48,26 @@ import "./styles.scss";
 import axios from "axios";
 import { socket } from "../../../src/socket.js";
 
-import { defineComponent, ref, onMounted, onUpdated, watch } from "vue";
+import {
+  defineComponent,
+  ref,
+  onMounted,
+  onUpdated,
+  watch,
+  computed,
+} from "vue";
 
 export default defineComponent({
   name: "Home",
   setup() {
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get("id");
-    const historyContainer = ref(null);
+    const urlParams: any = new URLSearchParams(window.location.search);
+    const userId: any = urlParams.get("id");
+    const historyContainer: any = ref(null);
     const conversations: any = ref([]);
-    const messages = ref([
-      { id: 1, content: "Hello" },
-      { id: 2, content: "How are you?" },
-      { id: 3, content: "I am fine, thank you." },
-    ]);
-    const isSocketConnected = ref(false);
+    const messages: any = ref([]);
 
     onMounted(async () => {
       //Kết nối socket
-
-
 
       try {
         const response = await axios.get(
@@ -75,6 +75,7 @@ export default defineComponent({
           {
             params: {
               userId,
+              pageSize: 100,
             },
           }
         );
@@ -84,21 +85,24 @@ export default defineComponent({
         console.error(error);
       }
     });
-    const handleConnect = () => {
-      console.log('aaaaa');
+    const newChatID: any = ref(null);
+    const addNewConversation = async () => {
+      messages.value = []
+      const response = await axios.post(
+        "https://api-coderpush-gpt.weesmartvn.com/chat/conversations",
+        {
+          userId: parseInt(userId),
+        }
+      );
+      console.log("response.message ", response);
 
-      socket.connect();
-
-    }
-    const addNewConversation = () => {
-      handleConnect()
-      console.log("addNewConversation");
-      console.log('connected:', socket.connected);
-      socket.emit('chat', {userId: 1, question: 'How are you?', conversationId: 18});
+      if (response.data.message == "Create conversation successful") {
+        newChatID.value = response.data.data.id;
+      }
     };
 
     const loadMessages = async (conversationId: number) => {
-
+      newChatID.value = conversationId
       try {
         const response = await axios.get(
           "https://api-coderpush-gpt.weesmartvn.com/chat/messages",
@@ -110,30 +114,62 @@ export default defineComponent({
           }
         );
         messages.value = response.data.data.reverse(); // Xử lý dữ liệu trả về từ API
-        console.log('messages.value ', messages.value);
-
+        console.log("messages.value ", messages.value);
       } catch (error) {
         console.error(error);
       }
     };
     const newMessage = ref("");
+    const textDemo = ref("")
+
     const sendMessage = () => {
       if (newMessage.value.trim()) {
+        console.log('newChatID.value ', newChatID.value);
+
+        socket.emit("chat", {
+          userId: userId,
+          question: newMessage.value.trim(),
+          conversationId: newChatID.value,
+        });
+
+        messages.value.push({
+          content: newMessage.value.trim(),
+          user_id: userId,
+          conversation_id: newChatID.value,
+          fromSocket: false // Thêm thuộc tính fromSocket cho message của bạn
+        });
 
         newMessage.value = "";
+        socket.on("chat-rs", (res: any) => {
+          console.log("res ", res.content);
+          // Thêm thuộc tính fromSocket cho message từ socket
+          res.fromSocket = true;
+          textDemo.value += res.content
+          messages.value.push({
+            content: textDemo.value,
+            user_id: userId,
+            conversation_id: newChatID.value,
+            fromSocket: true // Thêm thuộc tính fromSocket cho message của bạn
+
+          });
+
+        });
+
       }
     };
-    // onUpdated(() => {
-    //   socket.on("chat-rs", (message: any) => {
-    //     console.log('message ', message);
-    //   });
 
-    // });
+
+
+
+
+    // Watch for changes in messages array
     watch(
       () => messages.value,
       (val: any) => {
-
-        console.log("file: index.vue:127 ►► socket.on ►► message:", val);
+        console.log(
+          "file: index.vue:127 ►► socket.on ►► message:",
+          val[val.length - 1]
+        );
       }
     );
 

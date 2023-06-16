@@ -94,7 +94,7 @@ export default defineComponent({
       handleConnect()
       console.log("addNewConversation");
       console.log('connected:', socket.connected);
-      // socket.emit('chat', {userId: 1, question: 'How are you?'});
+      socket.emit('chat', {userId: 1, question: 'How are you?', conversationId: 18});
     };
 
     const loadMessages = async (conversationId: number) => {

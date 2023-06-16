@@ -21,6 +21,10 @@ socket.on("connect", () => {
   state.connected = true;
 });
 
+socket.on("chat-rs", (data) => {
+  console.log("data:", data);
+});
+
 socket.on("connect_error", (err) => {
   console.error('connect error:', err);
   console.log(`connect_error due to ${err.message}`);

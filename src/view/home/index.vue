@@ -93,6 +93,8 @@ export default defineComponent({
     const addNewConversation = () => {
       handleConnect()
       console.log("addNewConversation");
+      console.log('connected:', socket.connected);
+      // socket.emit('chat', {userId: 1, question: 'How are you?'});
     };
 
     const loadMessages = async (conversationId: number) => {

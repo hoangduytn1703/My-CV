@@ -52,9 +52,6 @@ import {
   defineComponent,
   ref,
   onMounted,
-  onUpdated,
-  watch,
-  computed,
 } from "vue";
 
 export default defineComponent({
@@ -65,10 +62,7 @@ export default defineComponent({
     const historyContainer: any = ref(null);
     const conversations: any = ref([]);
     const messages: any = ref([]);
-
-    onMounted(async () => {
-      //Kết nối socket
-
+    const initLoadListConversations = async () => {
       try {
         const response = await axios.get(
           "https://api-coderpush-gpt.weesmartvn.com/chat/conversations",
@@ -81,9 +75,15 @@ export default defineComponent({
         );
 
         conversations.value = response.data.data;
+        console.log("file: index.vue:78  initLoadListConversations  conversations.value:", conversations.value)
       } catch (error) {
         console.error(error);
       }
+    }
+    onMounted(async () => {
+      //Kết nối socket
+      await initLoadListConversations()
+
     });
     const newChatID: any = ref(null);
     const addNewConversation = async () => {
@@ -122,7 +122,7 @@ export default defineComponent({
     const newMessage = ref("");
     const textDemo = ref("")
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
       if (newMessage.value.trim()) {
         console.log('newChatID.value ', newChatID.value);
 
@@ -156,23 +156,21 @@ export default defineComponent({
         });
 
       }
+      setTimeout(async () => {
+        await initLoadListConversations()
+      }, 6000);
     };
 
 
-
-
-
-    // Watch for changes in messages array
-    watch(
-      () => messages.value,
-      (val: any) => {
-        console.log(
-          "file: index.vue:127 ►► socket.on ►► message:",
-          val[val.length - 1]
-        );
-      }
-    );
-
+    // watch(
+    //   () => messages.value,
+    //   (val: any) => {
+    //     console.log(
+    //       "file: index.vue:127 ►► socket.on ►► message:",
+    //       val[val.length - 1]
+    //     );
+    //   }
+    // );
     return {
       historyContainer,
       conversations,

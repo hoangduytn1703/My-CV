@@ -53,7 +53,7 @@ import {
   ref,
   onMounted,
 } from "vue";
-
+const API_BASE = 'http://localhost:3003'
 export default defineComponent({
   name: "Home",
   setup() {
@@ -66,7 +66,7 @@ export default defineComponent({
     const initLoadListConversations = async () => {
       try {
         const response = await axios.get(
-          "https://api-coderpush-gpt.weesmartvn.com/chat/conversations",
+          `${API_BASE}/chat/conversations`,
           {
             params: {
               userId,
@@ -88,7 +88,7 @@ export default defineComponent({
     const addNewConversation = async () => {
       messages.value = []
       const response = await axios.post(
-        "https://api-coderpush-gpt.weesmartvn.com/chat/conversations",
+        `${API_BASE}/chat/conversations`,
         {
           userId: parseInt(userId),
         }
@@ -108,7 +108,7 @@ export default defineComponent({
       newChatID.value = conversationId
       try {
         const response = await axios.get(
-          "https://api-coderpush-gpt.weesmartvn.com/chat/messages",
+          `${API_BASE}/chat/messages`,
           {
             params: {
               userId: userId,
@@ -124,6 +124,25 @@ export default defineComponent({
     const newMessage = ref("");
     const textDemo = ref("")
 
+    socket.on("chat-rs", async (res: any) => {          
+      if (res.content !== '[DONE]') {
+        textDemo.value += res.content
+        console.log('res.content:', res.content);
+
+        if (messages.value[messages.value.length - 1].is_chat_bot) {
+          messages.value.pop();
+        }
+        messages.value.push({
+          content: textDemo.value,
+          user_id: userId,
+          conversation_id: newChatID.value,
+          is_chat_bot: true,
+        });
+      } else {
+        textDemo.value = '';
+        // await initLoadListConversations();
+      }
+    });
     const sendMessage = async () => {
       if (newMessage.value.trim()) {
         await checkAndAddNewConversation();
@@ -141,22 +160,7 @@ export default defineComponent({
         });
 
         newMessage.value = "";
-        socket.on("chat-rs", (res: any) => {          
-          if (res.content !== '[DONE]') {
-            textDemo.value += res.content
-
-            if (messages.value[messages.value.length - 1].is_chat_bot) {
-              messages.value.pop();
-            }
-            messages.value.push({
-              content: textDemo.value,
-              user_id: userId,
-              conversation_id: newChatID.value,
-              is_chat_bot: true,
-            });
-          }
-
-        });
+        
 
       }
       setTimeout(async () => {

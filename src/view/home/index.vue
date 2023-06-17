@@ -13,7 +13,7 @@
     <div class="chat-box">
       <div class="chat-box-list">
         <div class="" v-for="message in messages" :key="message.id"
-          :class="[message.fromSocket ? 'bg-blue-500' : 'bg-red-500']">
+          :class="[message.is_chat_bot ? 'bg-blue-500' : 'bg-red-500']">
           {{ message.content }}
         </div>
       </div>
@@ -141,16 +141,20 @@ export default defineComponent({
         });
 
         newMessage.value = "";
-        socket.on("chat-rs", (res: any) => {
-          res.fromSocket = true;
-          textDemo.value += res.content
-          messages.value.push({
-            content: textDemo.value,
-            user_id: userId,
-            conversation_id: newChatID.value,
-            fromSocket: true
+        socket.on("chat-rs", (res: any) => {          
+          if (res.content !== '[DONE]') {
+            textDemo.value += res.content
 
-          });
+            if (messages.value[messages.value.length - 1].is_chat_bot) {
+              messages.value.pop();
+            }
+            messages.value.push({
+              content: textDemo.value,
+              user_id: userId,
+              conversation_id: newChatID.value,
+              is_chat_bot: true,
+            });
+          }
 
         });
 

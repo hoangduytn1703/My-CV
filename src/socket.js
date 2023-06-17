@@ -8,8 +8,8 @@ export const state = reactive({
 });
 
 // "undefined" means the URL will be computed from the `window.location` object
-const URL = "ws://localhost:3004";
-
+// const URL = "ws://localhost:3004";
+const URL = import.meta.env.VITE_VUE_APP_SOCKET_BASE;
 export const socket = io(URL, {
   autoConnect: true,
   path: "/socket.io",
@@ -26,10 +26,8 @@ socket.on("connect", () => {
 
 socket.on("connect_error", (err) => {
   console.error("connect error:", err);
-  console.log(`connect_error due to ${err.message}`);
 });
 
 socket.on("disconnect", () => {
-  console.log("disconnect cmnr");
   state.connected = false;
 });

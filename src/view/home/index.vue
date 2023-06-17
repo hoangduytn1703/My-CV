@@ -2,11 +2,11 @@
   <div class="chat-container">
     <nav class="history-container">
       <button class="addNewConversation" @click="addNewConversation">
-        Create new conversation
+        + &nbsp;&nbsp;&nbsp;New chat
       </button>
-      <div v-for="conversation in conversations" :key="conversation.id">
+      <div v-for="(conversation, index) in conversations" :key="conversation.id">
         <div @click="loadMessages(conversation.id)">
-          {{ conversation.title }}
+          {{ index + 1 }} / &nbsp;&nbsp;{{ conversation.title }}
         </div>
       </div>
     </nav>
@@ -21,12 +21,12 @@
       <div
         class="form-cus stretch mx-2 flex flex-row gap-3 last:mb-2 md:mx-4 md:last:mb-6 lg:mx-auto lg:max-w-2xl xl:max-w-3xl">
         <form @submit.prevent="sendMessage"
-          class="flex flex-col w-full py-[10px] flex-grow md:py-4 md:pl-4 relative border border-black/10 bg-white dark:border-gray-900/50 dark:text-white dark:bg-gray-700 rounded-xl shadow-xs dark:shadow-xs">
+          class="form-cus2 flex flex-col w-full py-[10px] flex-grow  md:pl-4 relative border border-black/10 bg-white dark:border-gray-900/50 dark:text-white dark:bg-gray-700 rounded-xl shadow-xs dark:shadow-xs">
           <input type="text"
-            class="m-0 w-full resize-none border-0 bg-transparent p-0 pr-10 focus:ring-0 focus-visible:ring-0 dark:bg-transparent md:pr-12 pl-3 md:pl-0"
+            class="cus-input m-0 w-full resize-none border-0 bg-transparent p-0 pr-10 focus:ring-0 focus-visible:ring-0 dark:bg-transparent md:pr-12 pl-3 md:pl-0"
             v-model="newMessage" />
           <button type="submit"
-            class="absolute p-1 rounded-md md:bottom-3 md:p-2 md:right-3 dark:hover:bg-gray-900 dark:disabled:hover:bg-transparent right-2 disabled:text-gray-400 enabled:bg-brand-purple text-white bottom-1.5 transition-colors disabled:opacity-40">
+            class="cus-btn absolute p-1 rounded-md md:bottom-3 md:p-2 md:right-3 dark:hover:bg-gray-900 dark:disabled:hover:bg-transparent right-2 disabled:text-gray-400 enabled:bg-brand-purple text-white bottom-1.5 transition-colors disabled:opacity-40">
             <span class="" data-state="closed">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" class="h-4 w-4 m-1 md:m-0"
                 stroke-width="2">
@@ -53,7 +53,8 @@ import {
   ref,
   onMounted,
 } from "vue";
-const API_BASE = 'http://localhost:3003'
+const apiUrl = import.meta.env.VITE_VUE_APP_API_BASE;
+
 export default defineComponent({
   name: "Home",
   setup() {
@@ -66,7 +67,7 @@ export default defineComponent({
     const initLoadListConversations = async () => {
       try {
         const response = await axios.get(
-          `${API_BASE}/chat/conversations`,
+          `${apiUrl}/chat/conversations`,
           {
             params: {
               userId,
@@ -88,7 +89,7 @@ export default defineComponent({
     const addNewConversation = async () => {
       messages.value = []
       const response = await axios.post(
-        `${API_BASE}/chat/conversations`,
+        `${apiUrl}/chat/conversations`,
         {
           userId: parseInt(userId),
         }
@@ -108,7 +109,7 @@ export default defineComponent({
       newChatID.value = conversationId
       try {
         const response = await axios.get(
-          `${API_BASE}/chat/messages`,
+          `${apiUrl}/chat/messages`,
           {
             params: {
               userId: userId,
@@ -122,24 +123,22 @@ export default defineComponent({
       }
     };
     const newMessage = ref("");
-    const textDemo = ref("")
+    const botMessage = ref("")
 
-    socket.on("chat-rs", async (res: any) => {          
+    socket.on("chat-rs", async (res: any) => {
       if (res.content !== '[DONE]') {
-        textDemo.value += res.content
-        console.log('res.content:', res.content);
-
+        botMessage.value += res.content
         if (messages.value[messages.value.length - 1].is_chat_bot) {
           messages.value.pop();
         }
         messages.value.push({
-          content: textDemo.value,
+          content: botMessage.value,
           user_id: userId,
           conversation_id: newChatID.value,
           is_chat_bot: true,
         });
       } else {
-        textDemo.value = '';
+        botMessage.value = '';
         // await initLoadListConversations();
       }
     });
@@ -160,7 +159,7 @@ export default defineComponent({
         });
 
         newMessage.value = "";
-        
+
 
       }
       setTimeout(async () => {
@@ -181,3 +180,14 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+.addNewConversation {
+  width: 100%;
+  padding: 15px;
+  background-color: transparent;
+  border: 1px solid #fff;
+  border-radius: 5px;
+  color: #fff;
+  text-align: left;
+}
+</style>

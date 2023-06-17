@@ -62,6 +62,7 @@ export default defineComponent({
     const historyContainer: any = ref(null);
     const conversations: any = ref([]);
     const messages: any = ref([]);
+    const isCreatedNewChat: any = ref(false);
     const initLoadListConversations = async () => {
       try {
         const response = await axios.get(
@@ -75,7 +76,6 @@ export default defineComponent({
         );
 
         conversations.value = response.data.data;
-        console.log("file: index.vue:78  initLoadListConversations  conversations.value:", conversations.value)
       } catch (error) {
         console.error(error);
       }
@@ -83,7 +83,6 @@ export default defineComponent({
     onMounted(async () => {
       //Kết nối socket
       await initLoadListConversations()
-
     });
     const newChatID: any = ref(null);
     const addNewConversation = async () => {
@@ -94,13 +93,17 @@ export default defineComponent({
           userId: parseInt(userId),
         }
       );
-      console.log("response.message ", response);
-
       if (response.data.message == "Create conversation successful") {
         newChatID.value = response.data.data.id;
+        isCreatedNewChat.value = true;
+
       }
     };
-
+    const checkAndAddNewConversation = async () => {
+      if (!isCreatedNewChat.value) {
+        await addNewConversation()
+      }
+    }
     const loadMessages = async (conversationId: number) => {
       newChatID.value = conversationId
       try {
@@ -114,7 +117,6 @@ export default defineComponent({
           }
         );
         messages.value = response.data.data.reverse(); // Xử lý dữ liệu trả về từ API
-        console.log("messages.value ", messages.value);
       } catch (error) {
         console.error(error);
       }
@@ -124,8 +126,7 @@ export default defineComponent({
 
     const sendMessage = async () => {
       if (newMessage.value.trim()) {
-        console.log('newChatID.value ', newChatID.value);
-
+        await checkAndAddNewConversation();
         socket.emit("chat", {
           userId: userId,
           question: newMessage.value.trim(),
@@ -136,20 +137,18 @@ export default defineComponent({
           content: newMessage.value.trim(),
           user_id: userId,
           conversation_id: newChatID.value,
-          fromSocket: false // Thêm thuộc tính fromSocket cho message của bạn
+          fromSocket: false
         });
 
         newMessage.value = "";
         socket.on("chat-rs", (res: any) => {
-          console.log("res ", res.content);
-          // Thêm thuộc tính fromSocket cho message từ socket
           res.fromSocket = true;
           textDemo.value += res.content
           messages.value.push({
             content: textDemo.value,
             user_id: userId,
             conversation_id: newChatID.value,
-            fromSocket: true // Thêm thuộc tính fromSocket cho message của bạn
+            fromSocket: true
 
           });
 
@@ -158,19 +157,9 @@ export default defineComponent({
       }
       setTimeout(async () => {
         await initLoadListConversations()
-      }, 6000);
+      }, 5000);
     };
 
-
-    // watch(
-    //   () => messages.value,
-    //   (val: any) => {
-    //     console.log(
-    //       "file: index.vue:127 ►► socket.on ►► message:",
-    //       val[val.length - 1]
-    //     );
-    //   }
-    // );
     return {
       historyContainer,
       conversations,

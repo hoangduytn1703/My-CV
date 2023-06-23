@@ -46,7 +46,7 @@
 import "./styles.scss";
 
 import axios from "axios";
-import { socket } from "../../../src/socket.js";
+import { socket } from "../../socket.js";
 
 import {
   defineComponent,

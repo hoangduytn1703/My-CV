@@ -43,9 +43,8 @@ export default (defaultNameStore: string): functionType => {
     };
     if (!newTab) {
       router.push(config);
-      window.scrollTo(0,0)
-    }
-    else {
+      window.scrollTo(0, 0);
+    } else {
       const newRoute = router.resolve(config);
       window.open(newRoute.href);
     }
@@ -78,7 +77,6 @@ export default (defaultNameStore: string): functionType => {
     return data[key];
   };
 
-
   /* End router */
 
   return {
@@ -86,7 +84,6 @@ export default (defaultNameStore: string): functionType => {
     storeGetters,
     routePushName,
     routePushPath,
-    getRoute
-    
+    getRoute,
   };
 };
